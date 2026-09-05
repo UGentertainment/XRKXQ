@@ -110,7 +110,7 @@
 
     async function waitForBridge() {
         if (!root.__xrkxqDzmmBridgeReady) return;
-        try { await timeout(root.__xrkxqDzmmBridgeReady, 8000, 'BRIDGE_READY_TIMEOUT'); } catch (_) {}
+        try { await timeout(root.__xrkxqDzmmBridgeReady, 2500, 'BRIDGE_READY_TIMEOUT'); } catch (_) {}
     }
 
     async function preload() {
@@ -123,7 +123,7 @@
         var currentGeneration = generation;
         try {
             status('syncing', '正在读取云存档…');
-            var indexResult = await timeout(api.kv.get(INDEX_KEY), 15000, 'SAVE_INDEX_TIMEOUT');
+            var indexResult = await timeout(api.kv.get(INDEX_KEY), 4000, 'SAVE_INDEX_TIMEOUT');
             var value = indexResult && indexResult.value;
             var entries = value && value.entries;
             if (!entries || typeof entries !== 'object') entries = Object.create(null);
@@ -138,7 +138,7 @@
                 loaded[key] = parts.map(function(item) {
                     return item && typeof item.value === 'string' ? item.value : '';
                 }).join('');
-            })), 20000, 'SAVE_DATA_TIMEOUT');
+            })), 6000, 'SAVE_DATA_TIMEOUT');
             if (!enabled || currentGeneration !== generation) return false;
             index = entries;
             cache = loaded;

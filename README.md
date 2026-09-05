@@ -31,6 +31,8 @@ https://<GitHub 用户名>.github.io/<仓库名>/
 
 KV 存档采用索引 + 分块结构，每块 90,000 个字符，低于平台单值 5 MiB 限制。手动存档会使用 `{ flush: true }`，同时实现了平台的 `reset` 和 `prepareDeleteRecord` 存档生命周期动作。
 
+云存档读取设有短超时；平台 SDK 或 KV 暂时无响应时会放行游戏启动，避免远端初始化永久盖住核心界面。之后的存档操作仍会继续尝试 KV。
+
 由于 GitHub Pages 游戏是角色卡页面中的跨域子 iframe，`js/dzmm-parent-bridge.js` 会用 `postMessage` 把存档请求转交给角色卡外壳；角色卡外壳持有平台注入的 `window.dzmm`。
 
 ## 本地预览
