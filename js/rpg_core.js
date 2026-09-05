@@ -3299,15 +3299,23 @@ Input._onLostFocus = function() {
  * @private
  */
 Input._pollGamepads = function() {
+    if (this._gamepadPollingDisabled) return;
     if (navigator.getGamepads) {
-        var gamepads = navigator.getGamepads();
-        if (gamepads) {
-            for (var i = 0; i < gamepads.length; i++) {
-                var gamepad = gamepads[i];
-                if (gamepad && gamepad.connected) {
-                    this._updateGamepadState(gamepad);
+        try {
+            var gamepads = navigator.getGamepads();
+            if (gamepads) {
+                for (var i = 0; i < gamepads.length; i++) {
+                    var gamepad = gamepads[i];
+                    if (gamepad && gamepad.connected) {
+                        this._updateGamepadState(gamepad);
+                    }
                 }
             }
+        } catch (error) {
+            // Sandboxed game cards can disable the Gamepad API through
+            // Permissions Policy. Keyboard, mouse and touch remain usable.
+            this._gamepadPollingDisabled = true;
+            console.warn('[Input] Gamepad API is unavailable in this frame.');
         }
     }
 };
