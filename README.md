@@ -27,7 +27,11 @@ https://<GitHub 用户名>.github.io/<仓库名>/
 ></iframe>
 ```
 
-存档保存在浏览器的站点存储中。同一浏览器下只要 Pages 地址（用户名、仓库名和协议）不变，刷新或重新打开 iframe 后可以继续读取存档。
+直接打开 GitHub Pages 时，存档会使用浏览器站点存储作为本地预览兜底。通过配套的角色卡 `index.html` 打开时，游戏会在启动前从平台 `dzmm.kv` 载入存档，并把 RMMV 的同步 `StorageManager` 调用转换成异步云端写入。
+
+KV 存档采用索引 + 分块结构，每块 90,000 个字符，低于平台单值 5 MiB 限制。手动存档会使用 `{ flush: true }`，同时实现了平台的 `reset` 和 `prepareDeleteRecord` 存档生命周期动作。
+
+由于 GitHub Pages 游戏是角色卡页面中的跨域子 iframe，`js/dzmm-parent-bridge.js` 会用 `postMessage` 把存档请求转交给角色卡外壳；角色卡外壳持有平台注入的 `window.dzmm`。
 
 ## 本地预览
 
@@ -42,3 +46,5 @@ python -m http.server 8789 --bind 127.0.0.1
 ## 发布内容
 
 仓库根目录就是 RMMV 的原 `www` 目录。Windows 桌面运行时（`Game.exe`、NW.js DLL 等）不属于网站，没有复制进来。未被游戏引用的开发归档和 PSD 也已排除。
+
+配套角色卡入口位于同级目录 `Summer Memories-游戏卡/index.html`，该文件单独上传到游戏平台，不放进 GitHub Pages 仓库。
