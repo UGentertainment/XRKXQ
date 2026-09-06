@@ -7,7 +7,8 @@
     };
 
     function fitGame() {
-        if (!Graphics || !Graphics._updateAllElements) return;
+        if (!Graphics || !Graphics._updateAllElements || !Graphics._errorPrinter ||
+                !Graphics._canvas || !Graphics._video || !Graphics._upperCanvas) return;
         Graphics._stretchEnabled = true;
         Graphics._updateAllElements();
     }

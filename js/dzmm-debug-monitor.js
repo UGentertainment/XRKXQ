@@ -160,7 +160,7 @@
         }
 
         return {
-            debugVersion: 15,
+            debugVersion: 21,
             time: new Date().toISOString(),
             diagnosis: diagnosis,
             scene: scene && scene.constructor && scene.constructor.name,

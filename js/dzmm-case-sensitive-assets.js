@@ -3,6 +3,15 @@
     if (!window.ImageManager || ImageManager._xrkxqCaseSensitiveAssets) return;
 
     var manifest = window.XRKXQ_ASSET_CASE_MAP || { image: {}, audio: {} };
+
+    if (window.Decrypter && Decrypter.extToEncryptExt) {
+        var originalEncryptedExtension = Decrypter.extToEncryptExt;
+        Decrypter.extToEncryptExt = function(url) {
+            var cleanUrl = String(url || '').split('?')[0];
+            return originalEncryptedExtension.call(this, cleanUrl) + '?v=20260906-21';
+        };
+    }
+
     var originalLoadBitmap = ImageManager.loadBitmap;
     ImageManager.loadBitmap = function(folder, filename, hue, smooth) {
         var folderKey = String(folder || '').replace(/\\/g, '/').toLowerCase();
