@@ -14,6 +14,61 @@
     var enabled = true;
     var generation = 0;
     var saveActionInstalled = false;
+    var tutorialSaveMigrationPending = false;
+
+    function migrateTutorialSaveJson(json) {
+        if (typeof json !== 'string') return json;
+        var oldWindowCommand = 'EMW_メッセージウィンドウ指定 3 終了禁止';
+        var changed = json.indexOf(oldWindowCommand) >= 0 ||
+            json.indexOf('MWP_VALID 7 3 1') >= 0;
+        if (!changed) return json;
+        tutorialSaveMigrationPending = true;
+        return json.split(oldWindowCommand).join('EMW_メッセージウィンドウ指定 0')
+            .split('MWP_VALID 7 3 1').join('MWP_INVALID');
+    }
+
+    function migrateRunningTutorialInterpreter(interpreter) {
+        if (!interpreter || !Array.isArray(interpreter._list)) return;
+        var list = interpreter._list;
+        var current = Number(interpreter._index || 0);
+        for (var i = 0; i < list.length; i++) {
+            var command = list[i];
+            var text = command && command.parameters && command.parameters[0];
+            if (text !== 'EMW_メッセージウィンドウ指定 0') continue;
+            var choiceIndex = -1;
+            for (var j = i + 1; j < Math.min(list.length, i + 12); j++) {
+                if (list[j] && list[j].code === 102) {
+                    choiceIndex = j;
+                    break;
+                }
+            }
+            if (choiceIndex >= 0 && current >= i && current <= choiceIndex + 1) {
+                interpreter._index = i;
+                interpreter._waitMode = '';
+                interpreter._windowId = 0;
+                break;
+            }
+        }
+        migrateRunningTutorialInterpreter(interpreter._childInterpreter);
+    }
+
+    function installTutorialSaveMigration() {
+        var dataManager = root.DataManager;
+        if (!dataManager || dataManager._xrkxqTutorialMigration) return;
+        var originalExtract = dataManager.extractSaveContents;
+        dataManager.extractSaveContents = function(contents) {
+            originalExtract.apply(this, arguments);
+            if (!tutorialSaveMigrationPending || !root.$gameMap ||
+                    root.$gameMap.mapId() !== 7) return;
+            migrateRunningTutorialInterpreter(root.$gameMap._interpreter);
+            if (root.$gameMessage) root.$gameMessage.clear();
+            if (root.$gameMessageEx && root.$gameMessageEx.window) {
+                root.$gameMessageEx.window(3).clear();
+            }
+            tutorialSaveMigrationPending = false;
+        };
+        dataManager._xrkxqTutorialMigration = true;
+    }
 
     function sdk() {
         return root.dzmm && root.dzmm.kv ? root.dzmm : null;
@@ -242,7 +297,7 @@
         };
         manager.load = function(savefileId) {
             var data = cache[storageKey(savefileId)];
-            return data ? LZString.decompressFromBase64(data) : null;
+            return data ? migrateTutorialSaveJson(LZString.decompressFromBase64(data)) : null;
         };
         manager.exists = function(savefileId) { return !!cache[storageKey(savefileId)]; };
         manager.remove = function(savefileId) {
@@ -356,6 +411,7 @@
             }
             await preload();
             installStorage();
+            installTutorialSaveMigration();
             installSaveAction();
             installReadyHook();
             return true;
