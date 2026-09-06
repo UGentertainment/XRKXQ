@@ -1775,14 +1775,14 @@
               "code": 356,
               "indent": 1,
               "parameters": [
-                "EMW_メッセージウィンドウ指定 3 終了禁止"
+                "EMW_メッセージウィンドウ指定 0"
               ]
             },
             {
               "code": 355,
               "indent": 1,
               "parameters": [
-                "if ($gameSystem._messagePopupCharacterIds) $gameSystem._messagePopupCharacterIds[3] = 0;"
+                "$gameSystem._messagePopupCharacterId = 0; if ($gameSystem._messagePopupCharacterIds) { $gameSystem._messagePopupCharacterIds[0] = 0; $gameSystem._messagePopupCharacterIds[3] = 0; }"
               ]
             },
             {
@@ -2259,14 +2259,14 @@
               "code": 356,
               "indent": 1,
               "parameters": [
-                "EMW_メッセージウィンドウ指定 3 終了禁止"
+                "EMW_メッセージウィンドウ指定 0"
               ]
             },
             {
               "code": 355,
               "indent": 1,
               "parameters": [
-                "if ($gameSystem._messagePopupCharacterIds) $gameSystem._messagePopupCharacterIds[3] = 0;"
+                "$gameSystem._messagePopupCharacterId = 0; if ($gameSystem._messagePopupCharacterIds) { $gameSystem._messagePopupCharacterIds[0] = 0; $gameSystem._messagePopupCharacterIds[3] = 0; }"
               ]
             },
             {
