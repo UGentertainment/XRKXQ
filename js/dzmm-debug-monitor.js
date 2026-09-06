@@ -160,7 +160,7 @@
         }
 
         return {
-            debugVersion: 13,
+            debugVersion: 14,
             time: new Date().toISOString(),
             diagnosis: diagnosis,
             scene: scene && scene.constructor && scene.constructor.name,
@@ -202,7 +202,8 @@
                 kvStorage: !!(window.StorageManager && StorageManager._xrkxqKvStorage),
                 saveMigration: !!(window.DataManager && DataManager._xrkxqTutorialMigration),
                 deadlockGuard: !!(window.SceneManager && SceneManager._xrkxqTutorialDeadlockGuard),
-                caseSensitiveAssets: !!(window.ImageManager && ImageManager._xrkxqCaseSensitiveAssets)
+                caseSensitiveAssets: !!(window.ImageManager && ImageManager._xrkxqCaseSensitiveAssets),
+                assetCaseManifest: !!window.XRKXQ_ASSET_CASE_MAP
             },
             lastError: lastError
         };
