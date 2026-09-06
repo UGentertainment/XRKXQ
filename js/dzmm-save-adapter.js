@@ -14,42 +14,73 @@
     var enabled = true;
     var generation = 0;
     var saveActionInstalled = false;
-    var tutorialSaveMigrationPending = false;
-
     function migrateTutorialSaveJson(json) {
-        if (typeof json !== 'string') return json;
-        var oldWindowCommand = 'EMW_メッセージウィンドウ指定 3 終了禁止';
-        var changed = json.indexOf(oldWindowCommand) >= 0 ||
-            json.indexOf('MWP_VALID 7 3 1') >= 0;
-        if (!changed) return json;
-        tutorialSaveMigrationPending = true;
-        return json.split(oldWindowCommand).join('EMW_メッセージウィンドウ指定 0')
-            .split('MWP_VALID 7 3 1').join('MWP_INVALID');
+        // Never rewrite serialized event commands as text. RMMV saves the
+        // running interpreter, so broad replacements can create a wait state
+        // that no longer matches its message window.
+        return json;
     }
 
-    function migrateRunningTutorialInterpreter(interpreter) {
-        if (!interpreter || !Array.isArray(interpreter._list)) return;
+    function recoverRunningTutorialInterpreter(interpreter, force) {
+        if (!interpreter || !Array.isArray(interpreter._list)) return false;
         var list = interpreter._list;
-        var current = Number(interpreter._index || 0);
+        var recovered = false;
         for (var i = 0; i < list.length; i++) {
             var command = list[i];
-            var text = command && command.parameters && command.parameters[0];
-            if (text !== 'EMW_メッセージウィンドウ指定 0') continue;
+            var text = command && command.code === 401 && command.parameters && command.parameters[0];
+            if (typeof text !== 'string' || text.indexOf('要听关于「回忆点数」的说明吗？') < 0) continue;
+
+            if (text.indexOf('\\^') < 0) command.parameters[0] += '\\^';
+            var popupIndex = -1;
             var choiceIndex = -1;
             for (var j = i + 1; j < Math.min(list.length, i + 12); j++) {
-                if (list[j] && list[j].code === 102) {
+                var next = list[j];
+                if (popupIndex < 0 && next && next.code === 356) popupIndex = j;
+                if (next && next.code === 102) {
                     choiceIndex = j;
                     break;
                 }
             }
-            if (choiceIndex >= 0 && current >= i && current <= choiceIndex + 1) {
-                interpreter._index = i;
-                interpreter._waitMode = '';
-                interpreter._windowId = 0;
-                break;
+            if (popupIndex < 0 || choiceIndex < 0) continue;
+
+            list[popupIndex].code = 356;
+            list[popupIndex].parameters = ['EMW_メッセージウィンドウ指定 3 終了禁止'];
+            if (list[popupIndex + 1]) {
+                list[popupIndex + 1].code = 356;
+                list[popupIndex + 1].parameters = ['MWP_VALID 7 3 1'];
             }
+
+            var current = Number(interpreter._index || 0);
+            if (interpreter._waitMode === 'message' && Number(interpreter._windowId) === 1 &&
+                    current > i && current <= popupIndex) {
+                if (!force && !interpreter._xrkxqTutorialStuckAt) {
+                    interpreter._xrkxqTutorialStuckAt = Date.now();
+                    return false;
+                }
+                if (!force && Date.now() - interpreter._xrkxqTutorialStuckAt < 1000) return false;
+                interpreter._index = popupIndex;
+                interpreter._waitMode = '';
+                interpreter._windowId = 3;
+                delete interpreter._xrkxqTutorialStuckAt;
+                recovered = true;
+            }
+            break;
         }
-        migrateRunningTutorialInterpreter(interpreter._childInterpreter);
+        return recoverRunningTutorialInterpreter(interpreter._childInterpreter, force) || recovered;
+    }
+
+    function clearRecoveredTutorialMessages() {
+        if (root.$gameMessageEx && root.$gameMessageEx.window) {
+            root.$gameMessageEx.window(1).clear();
+            root.$gameMessageEx.window(3).clear();
+        }
+        var scene = root.SceneManager && root.SceneManager._scene;
+        var windows = scene && scene._messageExWindows;
+        var oldWindow = windows && windows[1];
+        if (oldWindow) {
+            oldWindow.deactivate();
+            oldWindow.close();
+        }
     }
 
     function installTutorialSaveMigration() {
@@ -58,16 +89,25 @@
         var originalExtract = dataManager.extractSaveContents;
         dataManager.extractSaveContents = function(contents) {
             originalExtract.apply(this, arguments);
-            if (!tutorialSaveMigrationPending || !root.$gameMap ||
-                    root.$gameMap.mapId() !== 7) return;
-            migrateRunningTutorialInterpreter(root.$gameMap._interpreter);
-            if (root.$gameMessage) root.$gameMessage.clear();
-            if (root.$gameMessageEx && root.$gameMessageEx.window) {
-                root.$gameMessageEx.window(3).clear();
+            if (!root.$gameMap || root.$gameMap.mapId() !== 7) return;
+            if (recoverRunningTutorialInterpreter(root.$gameMap._interpreter, true)) {
+                clearRecoveredTutorialMessages();
             }
-            tutorialSaveMigrationPending = false;
         };
         dataManager._xrkxqTutorialMigration = true;
+
+        var sceneManager = root.SceneManager;
+        if (sceneManager && !sceneManager._xrkxqTutorialDeadlockGuard) {
+            var originalUpdateMain = sceneManager.updateMain;
+            sceneManager.updateMain = function() {
+                originalUpdateMain.apply(this, arguments);
+                if (root.$gameMap && root.$gameMap.mapId() === 7 &&
+                        recoverRunningTutorialInterpreter(root.$gameMap._interpreter, false)) {
+                    clearRecoveredTutorialMessages();
+                }
+            };
+            sceneManager._xrkxqTutorialDeadlockGuard = true;
+        }
     }
 
     function sdk() {
