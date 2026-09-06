@@ -1756,7 +1756,7 @@
               "code": 401,
               "indent": 1,
               "parameters": [
-                "\\>　　　　　　　　　 \\<要听关于「回忆点数」的说明吗？"
+                "\\>　　　　　　　　　 \\<要听关于「回忆点数」的说明吗？\\^"
               ]
             },
             {
@@ -1775,14 +1775,14 @@
               "code": 356,
               "indent": 1,
               "parameters": [
-                "EMW_メッセージウィンドウ指定 0"
+                "EMW_メッセージウィンドウ指定 3 終了禁止"
               ]
             },
             {
-              "code": 355,
+              "code": 356,
               "indent": 1,
               "parameters": [
-                "$gameSystem._messagePopupCharacterId = 0; if ($gameSystem._messagePopupCharacterIds) { $gameSystem._messagePopupCharacterIds[0] = 0; $gameSystem._messagePopupCharacterIds[3] = 0; }"
+                "MWP_VALID 7 3 1"
               ]
             },
             {
@@ -2259,14 +2259,14 @@
               "code": 356,
               "indent": 1,
               "parameters": [
-                "EMW_メッセージウィンドウ指定 0"
+                "EMW_メッセージウィンドウ指定 3 終了禁止"
               ]
             },
             {
-              "code": 355,
+              "code": 356,
               "indent": 1,
               "parameters": [
-                "$gameSystem._messagePopupCharacterId = 0; if ($gameSystem._messagePopupCharacterIds) { $gameSystem._messagePopupCharacterIds[0] = 0; $gameSystem._messagePopupCharacterIds[3] = 0; }"
+                "MWP_VALID 7 3 1"
               ]
             },
             {
