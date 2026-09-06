@@ -52,5 +52,4 @@ var $plugins =
 {"name":"MessageWindowHidden","status":true,"description":"メッセージウィンドウ一時消去プラグイン","parameters":{"triggerButton":"[\"shift\"]","linkPictureNumbers":"[\"29\"]","linkShowPictureNumbers":"[]","disableSwitchId":"0","disableInBattle":"false"}},
 {"name":"BackUpDatabase","status":false,"description":"データバックアッププラグイン","parameters":{"backUpPath":"/backup","includeSave":"false","timeUnit":"true"}},
 {"name":"UTA_MessageSkip","status":true,"description":"特定キーを押す事でメッセージをスキップできるようにします。","parameters":{"Skip Key":"control","Show Trace":"false"}}
-,{"name":"DZMM_WebMessageCompat_v3","status":true,"description":"Web iframe compatibility for extended message windows and legacy saves.","parameters":{}}
 ];
