@@ -1478,11 +1478,9 @@ AudioManager.updateBufferParameters = function(buffer, configVolume, audio) {
 };
 
 AudioManager.audioFileExt = function() {
-    if (WebAudio.canPlayOgg() && !Utils.isMobileDevice()) {
-        return '.ogg';
-    } else {
-        return '.m4a';
-    }
+    // This deployment contains encrypted OGG files (.rpgmvo) only. The
+    // legacy mobile branch would request missing .rpgmvm files instead.
+    return '.ogg';
 };
 
 AudioManager.shouldUseHtml5Audio = function() {
