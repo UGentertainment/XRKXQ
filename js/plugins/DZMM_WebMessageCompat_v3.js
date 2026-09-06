@@ -1,5 +1,5 @@
 /*:
- * @plugindesc Web/iframe compatibility guard for FTKR extended choice windows.
+ * @plugindesc Web/iframe compatibility guard for FTKR extended message and choice windows.
  * @author DZMM
  *
  * This file intentionally affects Window_ChoiceListEx only.  The game's normal
@@ -12,6 +12,43 @@
     if (typeof Window_ChoiceListEx === 'undefined' ||
             typeof Window_MessageEx === 'undefined') {
         return;
+    }
+
+    // MessageWindowPopup added this field to Game_System.  Saves restored from
+    // another build (including KV/cloud saves) can legitimately lack it.
+    // Its original set/get/clear methods index the field without checking it,
+    // which aborts the event immediately before the extended popup is shown.
+    function ensurePopupState(gameSystem) {
+        if (!Array.isArray(gameSystem._messagePopupCharacterIds)) {
+            gameSystem._messagePopupCharacterIds = [];
+        }
+    }
+
+    if (typeof Game_System !== 'undefined' &&
+            typeof Game_System.prototype.setMessagePopupEx === 'function') {
+        var originalSetMessagePopupEx = Game_System.prototype.setMessagePopupEx;
+        Game_System.prototype.setMessagePopupEx = function(windowId, eventId) {
+            ensurePopupState(this);
+            return originalSetMessagePopupEx.apply(this, arguments);
+        };
+
+        var originalGetMessagePopupIdEx = Game_System.prototype.getMessagePopupIdEx;
+        Game_System.prototype.getMessagePopupIdEx = function(windowId) {
+            ensurePopupState(this);
+            return originalGetMessagePopupIdEx.apply(this, arguments);
+        };
+
+        var originalClearMessagePopupEx = Game_System.prototype.clearMessagePopupEx;
+        Game_System.prototype.clearMessagePopupEx = function(windowId) {
+            ensurePopupState(this);
+            return originalClearMessagePopupEx.apply(this, arguments);
+        };
+
+        var originalClearMessagePopup = Game_System.prototype.clearMessagePopup;
+        Game_System.prototype.clearMessagePopup = function() {
+            ensurePopupState(this);
+            return originalClearMessagePopup.apply(this, arguments);
+        };
     }
 
     var originalChoiceStart = Window_ChoiceListEx.prototype.start;
@@ -92,6 +129,35 @@
             report('start', e, this);
         }
         recoverChoiceWindow(this);
+    };
+
+    // If a custom popup skin or popup target still fails inside a restricted
+    // iframe, show the same text in a regular extended message window.  This
+    // keeps the event alive and lets its following choice window start.
+    var originalExtendedStartMessage = Window_MessageEx.prototype.startMessage;
+    Window_MessageEx.prototype.startMessage = function() {
+        try {
+            return originalExtendedStartMessage.apply(this, arguments);
+        } catch (e) {
+            report('message-start', e, this);
+            this._targetCharacterId = null;
+            this._textState = {
+                index: 0,
+                text: this.convertEscapeCharacters(this._gameMessage.allText())
+            };
+            this.padding = this.standardPadding();
+            this.width = this.windowWidth();
+            this.height = this.windowHeight();
+            this.newPage(this._textState);
+            this._positionType = this._gameMessage.positionType();
+            this.x = 0;
+            this.y = this._positionType * (Graphics.boxHeight - this.height) / 2;
+            this.updateBackground();
+            this.visible = true;
+            this.contentsOpacity = 255;
+            this.open();
+            this.activate();
+        }
     };
 
     // Some embedded browsers briefly report the popup target as unavailable.
