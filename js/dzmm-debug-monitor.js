@@ -160,7 +160,7 @@
         }
 
         return {
-            debugVersion: 14,
+            debugVersion: 15,
             time: new Date().toISOString(),
             diagnosis: diagnosis,
             scene: scene && scene.constructor && scene.constructor.name,
@@ -203,7 +203,9 @@
                 saveMigration: !!(window.DataManager && DataManager._xrkxqTutorialMigration),
                 deadlockGuard: !!(window.SceneManager && SceneManager._xrkxqTutorialDeadlockGuard),
                 caseSensitiveAssets: !!(window.ImageManager && ImageManager._xrkxqCaseSensitiveAssets),
-                assetCaseManifest: !!window.XRKXQ_ASSET_CASE_MAP
+                assetCaseManifest: !!window.XRKXQ_ASSET_CASE_MAP,
+                protagonistPortraitsHidden: !!window.XRKXQ_PROTAGONIST_PORTRAITS_HIDDEN,
+                responsiveDisplay: !!window.XRKXQ_RESPONSIVE_DISPLAY
             },
             lastError: lastError
         };
