@@ -32,10 +32,13 @@
 
             if (text.indexOf('\\^') < 0) command.parameters[0] += '\\^';
             var popupIndex = -1;
+            var skinIndex = -1;
             var choiceIndex = -1;
             for (var j = i + 1; j < Math.min(list.length, i + 12); j++) {
                 var next = list[j];
                 if (popupIndex < 0 && next && next.code === 356) popupIndex = j;
+                if (next && next.code === 356 && next.parameters &&
+                        /^MWP_SETTING SKIN /i.test(String(next.parameters[0] || ''))) skinIndex = j;
                 if (next && next.code === 102) {
                     choiceIndex = j;
                     break;
@@ -49,16 +52,21 @@
                 list[popupIndex + 1].code = 356;
                 list[popupIndex + 1].parameters = ['MWP_VALID 7 3 1'];
             }
+            if (skinIndex >= 0) list[skinIndex].parameters = ['MWP_SETTING SKIN Window2'];
 
             var current = Number(interpreter._index || 0);
+            var recoveryIndex = -1;
             if (interpreter._waitMode === 'message' && Number(interpreter._windowId) === 1 &&
-                    current > i && current <= popupIndex) {
+                    current > i && current <= popupIndex) recoveryIndex = popupIndex;
+            if (skinIndex >= 0 && interpreter._waitMode === 'image' &&
+                    current > skinIndex && current <= choiceIndex) recoveryIndex = skinIndex;
+            if (recoveryIndex >= 0) {
                 if (!force && !interpreter._xrkxqTutorialStuckAt) {
                     interpreter._xrkxqTutorialStuckAt = Date.now();
                     return false;
                 }
                 if (!force && Date.now() - interpreter._xrkxqTutorialStuckAt < 1000) return false;
-                interpreter._index = popupIndex;
+                interpreter._index = recoveryIndex;
                 interpreter._waitMode = '';
                 interpreter._windowId = 3;
                 delete interpreter._xrkxqTutorialStuckAt;

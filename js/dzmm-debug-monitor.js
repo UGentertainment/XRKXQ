@@ -122,6 +122,7 @@
         }
         if (mapId === 7 && info && Number(info.windowId) === 3) {
             diagnosis = '已进入3号专用弹窗流程';
+            if (info.waitMode === 'image') diagnosis = '已确认卡点：3号弹窗正在等待皮肤图片加载';
         }
 
         return {
