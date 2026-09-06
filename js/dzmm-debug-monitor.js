@@ -91,6 +91,34 @@
         };
     }
 
+    function imageCacheInfo() {
+        var items = window.ImageManager && ImageManager._imageCache && ImageManager._imageCache._items || {};
+        var keys = Object.keys(items);
+        var pending = [];
+        var errors = [];
+        keys.forEach(function(key) {
+            var bitmap = items[key] && items[key].bitmap;
+            if (!bitmap) return;
+            var entry = {
+                key: short(key),
+                url: short(bitmap._url || bitmap.url || ''),
+                loadingState: bitmap._loadingState,
+                ready: safe(function() { return !!bitmap.isReady(); }, false),
+                error: safe(function() { return !!bitmap.isError(); }, false),
+                requestOnly: safe(function() { return !!bitmap.isRequestOnly(); }, false),
+                size: [bitmap.width || 0, bitmap.height || 0]
+            };
+            if (entry.error) errors.push(entry);
+            else if (!entry.ready && !entry.requestOnly) pending.push(entry);
+        });
+        return {
+            total: keys.length,
+            ready: safe(function() { return !!ImageManager.isReady(); }, false),
+            pending: pending.slice(0, 30),
+            errors: errors.slice(0, 30)
+        };
+    }
+
     function collect() {
         var scene = window.SceneManager && SceneManager._scene;
         var map = window.$gameMap;
@@ -113,6 +141,7 @@
 
         var mapId = map ? safe(function() { return map.mapId(); }, map._mapId) : null;
         var info = interpreterInfo(interpreter, 0);
+        var images = imageCacheInfo();
         var diagnosis = '等待游戏运行';
         if (scene) diagnosis = '未发现目标死锁';
         if (mapId === 7 && info && info.waitMode === 'message' && Number(info.windowId) === 1) {
@@ -124,16 +153,40 @@
             diagnosis = '已进入3号专用弹窗流程';
             if (info.waitMode === 'image') diagnosis = '已确认卡点：3号弹窗正在等待皮肤图片加载';
         }
+        if (info && info.waitMode === 'transfer') {
+            diagnosis = images.ready ? '传送仍未完成，但图片缓存已就绪' : '传送场景正在等待图片资源';
+            if (images.errors.length) diagnosis = '传送卡住：图片缓存中存在加载错误';
+            else if (images.pending.length) diagnosis = '传送卡住：存在未完成的图片资源';
+        }
 
         return {
-            debugVersion: 12,
+            debugVersion: 13,
             time: new Date().toISOString(),
             diagnosis: diagnosis,
             scene: scene && scene.constructor && scene.constructor.name,
             mapId: mapId,
+            sceneManager: {
+                sceneStarted: !!(window.SceneManager && SceneManager._sceneStarted),
+                sceneChanging: safe(function() { return !!SceneManager.isSceneChanging(); }, false),
+                nextScene: window.SceneManager && SceneManager._nextScene && SceneManager._nextScene.constructor && SceneManager._nextScene.constructor.name,
+                currentMapLoaded: scene && scene._mapLoaded,
+                currentTransfer: scene && scene._transfer,
+                dataMapLoaded: !!window.$dataMap,
+                dataErrorUrl: window.DataManager && DataManager._errorUrl
+            },
+            playerTransfer: window.$gamePlayer ? {
+                transferring: !!$gamePlayer._transferring,
+                newMapId: $gamePlayer._newMapId,
+                newX: $gamePlayer._newX,
+                newY: $gamePlayer._newY,
+                newDirection: $gamePlayer._newDirection,
+                fadeType: $gamePlayer._fadeType,
+                needsMapReload: !!$gamePlayer._needsMapReload
+            } : null,
             interpreter: info,
             messages: messages,
             windows: windows,
+            imageCache: images,
             input: {
                 documentHasFocus: safe(function() { return document.hasFocus(); }, false),
                 visibility: document.visibilityState,
