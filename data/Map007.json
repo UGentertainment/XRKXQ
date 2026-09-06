@@ -1779,10 +1779,10 @@
               ]
             },
             {
-              "code": 356,
+              "code": 355,
               "indent": 1,
               "parameters": [
-                "MWP_VALID 7 3 1"
+                "if ($gameSystem._messagePopupCharacterIds) $gameSystem._messagePopupCharacterIds[3] = 0;"
               ]
             },
             {
@@ -2263,10 +2263,10 @@
               ]
             },
             {
-              "code": 356,
+              "code": 355,
               "indent": 1,
               "parameters": [
-                "MWP_VALID 7 3 1"
+                "if ($gameSystem._messagePopupCharacterIds) $gameSystem._messagePopupCharacterIds[3] = 0;"
               ]
             },
             {
